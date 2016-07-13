@@ -18,9 +18,6 @@
 
 #include <LiquidCrystal.h>
 
-const int stepsPerRevolution = 200;  // change this to fit the number of steps per revolution
-// for your motor
-
 
 // initialize the stepper library on pins 8 through 11:
 
@@ -58,10 +55,16 @@ void setup() {
 void loop() {
   if(digitalRead(downButton) == 1){
     stepArrayIndex--;
+    if(stepArrayIndex < 0) {
+      stepArrayIndex = 11;  
+    }
     refreshLCD();
   }
   if(digitalRead(upButton) == 1){
     stepArrayIndex++;
+    if(stepArrayIndex > 11){
+      stepArrayIndex = 0;  
+    }
     refreshLCD();
   }
   if(digitalRead(resetButton) == 1){
@@ -76,7 +79,9 @@ void loop() {
 }
 
 void stepMotor(int i){
-   stepCount += i;
+   if(i > 0){
+    stepCount += i;
+   }
    digitalWrite(ENA, HIGH);
    digitalWrite(ENB, HIGH);
   while(true){
