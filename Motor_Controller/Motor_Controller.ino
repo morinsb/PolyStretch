@@ -16,16 +16,18 @@
 
  */
 
-#include <Stepper.h>
+#include <LiquidCrystal.h>
 
 const int stepsPerRevolution = 200;  // change this to fit the number of steps per revolution
 // for your motor
 
 
 // initialize the stepper library on pins 8 through 11:
-Stepper myStepper(stepsPerRevolution, 8, 9, 10, 11);
 
 int stepCount = 0;  // number of steps the motor has taken
+int stepArrayIndex = 4;
+int stepCycleArray[] = {-100, -10, -5, -1, 1, 5, 10, 50, 100, 500, 1000, 10000};
+
 
 #define ENA 8
 #define ENB 9
@@ -35,32 +37,46 @@ int stepCount = 0;  // number of steps the motor has taken
 #define orange 12  // In3
 #define yellow 13  // In4
 
-#define button1 4
-#define button1 5
-#define button1 6
-#define button1 7
+#define triggerButton 4
+#define resetButton 5
+#define upButton 6
+#define downButton 7
+
+LiquidCrystal lcd(47, 48, 49, 50, 51, 52);
 
 void setup() {
-  pinMode(7, INPUT);
-  pinMode(6, INPUT);
-  pinMode(5, INPUT);
-  pinMode(4, INPUT);
+  DDRB = 0x3f;
+  PORTB = 0x00;
+  pinMode(triggerButton, INPUT);
+  pinMode(resetButton, INPUT);
+  pinMode(upButton, INPUT);
+  pinMode(downButton, INPUT);
+
+  lcd.begin(16,2);
 }
 
 void loop() {
-  // read the sensor value:
-  int sensorReading = analogRead(A0);
-  // map it to a range from 0 to 100:
-  int motorSpeed = map(sensorReading, 0, 1023, 0, 100);
-  // set the motor speed:
-  if (motorSpeed > 0) {
-    myStepper.setSpeed(motorSpeed);
-    // step 1/100 of a revolution:
-    myStepper.step(stepsPerRevolution / 100);
+  if(digitalRead(downButton) == 1){
+    stepArrayIndex--;
+    refreshLCD();
   }
+  if(digitalRead(upButton) == 1){
+    stepArrayIndex++;
+    refreshLCD();
+  }
+  if(digitalRead(resetButton) == 1){
+    stepMotor(-stepCount);  
+    refreshLCD();
+  }
+  else if(digitalRead(triggerButton) == 1){
+      stepMotor(stepCycleArray[stepArrayIndex]);
+      refreshLCD();
+  }
+  
 }
 
-void stepMootr(int steps){
+void stepMotor(int i){
+   stepCount += i;
    digitalWrite(ENA, HIGH);
    digitalWrite(ENB, HIGH);
   while(true){
@@ -68,7 +84,7 @@ void stepMootr(int steps){
     digitalWrite(brown, 0);
     digitalWrite(orange, 1);
     digitalWrite(yellow, 0);
-    delay(j);
+    delay(10);
     i--;
     if (i < 1) break; 
 
@@ -78,7 +94,7 @@ void stepMootr(int steps){
     digitalWrite(brown, 0);
     digitalWrite(orange, 0);
     digitalWrite(yellow, 1);
-    delay(j);  
+    delay(10);  
     i--;
     if (i < 1) break;
 
@@ -86,7 +102,7 @@ void stepMootr(int steps){
     digitalWrite(brown, 1);
     digitalWrite(orange, 0);
     digitalWrite(yellow, 1);
-    delay(j);
+    delay(10);
     i--;
     if (i < 1) break;
 
@@ -94,9 +110,10 @@ void stepMootr(int steps){
     digitalWrite(brown, 1);
     digitalWrite(orange, 1);
     digitalWrite(yellow, 0);
-    delay(j);  
+    delay(10);  
     i--;
     if (i < 1) break;
+    
   }
   
 
@@ -106,4 +123,12 @@ void stepMootr(int steps){
 
 
   }
-}
+
+  void refreshLCD(){
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.write(stepCycleArray[stepArrayIndex]);
+    lcd.setCursor(0, 1);
+    lcd.write(stepCount);
+  }
+
