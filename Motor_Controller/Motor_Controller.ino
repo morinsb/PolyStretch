@@ -27,8 +27,24 @@ Stepper myStepper(stepsPerRevolution, 8, 9, 10, 11);
 
 int stepCount = 0;  // number of steps the motor has taken
 
+#define ENA 8
+#define ENB 9
+
+#define black 10  // In1
+#define brown 11  // In2
+#define orange 12  // In3
+#define yellow 13  // In4
+
+#define button1 4
+#define button1 5
+#define button1 6
+#define button1 7
+
 void setup() {
-  // nothing to do inside the setup
+  pinMode(7, INPUT);
+  pinMode(6, INPUT);
+  pinMode(5, INPUT);
+  pinMode(4, INPUT);
 }
 
 void loop() {
@@ -41,5 +57,53 @@ void loop() {
     myStepper.setSpeed(motorSpeed);
     // step 1/100 of a revolution:
     myStepper.step(stepsPerRevolution / 100);
+  }
+}
+
+void stepMootr(int steps){
+   digitalWrite(ENA, HIGH);
+   digitalWrite(ENB, HIGH);
+  while(true){
+    digitalWrite(black, 1);
+    digitalWrite(brown, 0);
+    digitalWrite(orange, 1);
+    digitalWrite(yellow, 0);
+    delay(j);
+    i--;
+    if (i < 1) break; 
+
+
+
+    digitalWrite(black, 1);
+    digitalWrite(brown, 0);
+    digitalWrite(orange, 0);
+    digitalWrite(yellow, 1);
+    delay(j);  
+    i--;
+    if (i < 1) break;
+
+    digitalWrite(black, 0);
+    digitalWrite(brown, 1);
+    digitalWrite(orange, 0);
+    digitalWrite(yellow, 1);
+    delay(j);
+    i--;
+    if (i < 1) break;
+
+    digitalWrite(black, 0);
+    digitalWrite(brown, 1);
+    digitalWrite(orange, 1);
+    digitalWrite(yellow, 0);
+    delay(j);  
+    i--;
+    if (i < 1) break;
+  }
+  
+
+  // all outputs to stepper off
+  digitalWrite(ENA, LOW);
+  digitalWrite(ENB, LOW);
+
+
   }
 }
