@@ -24,6 +24,7 @@
 int stepCount = 0;  // number of steps the motor has taken
 int stepArrayIndex = 4;
 int stepCycleArray[] = {-100, -10, -5, -1, 1, 5, 10, 50, 100, 500, 1000, 10000};
+int currentStepperPosition = 0;
 
 
 #define ENA 8
@@ -42,81 +43,108 @@ int stepCycleArray[] = {-100, -10, -5, -1, 1, 5, 10, 50, 100, 500, 1000, 10000};
 LiquidCrystal lcd(47, 48, 49, 50, 51, 52);
 
 void setup() {
-  DDRB = 0x3f;
-  PORTB = 0x00;
+  pinMode(ENA, OUTPUT);
+  pinMode(ENB, OUTPUT);
+  pinMode(black, OUTPUT);
+  pinMode(brown, OUTPUT);
+  pinMode(orange, OUTPUT);
+  pinMode(yellow, OUTPUT);
+
+  digitalWrite(ENA, LOW);
+  digitalWrite(ENB, LOW);
+  digitalWrite(black, LOW);
+  digitalWrite(brown, LOW);
+  digitalWrite(orange, LOW);
+  digitalWrite(yellow, LOW);
+  
   pinMode(triggerButton, INPUT);
   pinMode(resetButton, INPUT);
   pinMode(upButton, INPUT);
   pinMode(downButton, INPUT);
 
   lcd.begin(16,2);
+  lcd.write("Hello, world!");
 }
 
 void loop() {
-  if(digitalRead(downButton) == 1){
+  if(digitalRead(downButton) == HIGH){
     stepArrayIndex--;
     if(stepArrayIndex < 0) {
       stepArrayIndex = 11;  
     }
     refreshLCD();
   }
-  if(digitalRead(upButton) == 1){
+  if(digitalRead(upButton) == HIGH){
     stepArrayIndex++;
     if(stepArrayIndex > 11){
       stepArrayIndex = 0;  
     }
     refreshLCD();
   }
-  if(digitalRead(resetButton) == 1){
-    stepMotor(-stepCount);  
+  if(digitalRead(resetButton) == HIGH){
+    stepMotorForward(-stepCount, currentStepperPosition);  
     refreshLCD();
   }
-  else if(digitalRead(triggerButton) == 1){
-      stepMotor(stepCycleArray[stepArrayIndex]);
+  else if(digitalRead(triggerButton) == HIGH){
+      stepMotorForward(stepCycleArray[stepArrayIndex], currentStepperPosition);
       refreshLCD();
   }
   
 }
 
-void stepMotor(int i){
+void stepMotorForward(int i, int curPos){
    if(i > 0){
     stepCount += i;
    }
    digitalWrite(ENA, HIGH);
    digitalWrite(ENB, HIGH);
   while(true){
-    digitalWrite(black, 1);
-    digitalWrite(brown, 0);
-    digitalWrite(orange, 1);
-    digitalWrite(yellow, 0);
-    delay(10);
-    i--;
+    if(! curPos > 0){
+      digitalWrite(black, 1);
+      digitalWrite(brown, 0);
+      digitalWrite(orange, 1);
+      digitalWrite(yellow, 0);
+      delay(1000);
+      i--;
+      currentStepperPosition = 0;
+    } else{
+      curPos--;  
+    }
     if (i < 1) break; 
 
 
-
-    digitalWrite(black, 1);
-    digitalWrite(brown, 0);
-    digitalWrite(orange, 0);
-    digitalWrite(yellow, 1);
-    delay(10);  
-    i--;
+    if(! curPos > 0){
+      digitalWrite(black, 1);
+      digitalWrite(brown, 0);
+      digitalWrite(orange, 0);
+      digitalWrite(yellow, 1);
+      delay(1000);  
+      i--;
+      currentStepperPosition = 1;
+    } else {
+      curPos--;  
+    }
+    
     if (i < 1) break;
 
-    digitalWrite(black, 0);
-    digitalWrite(brown, 1);
-    digitalWrite(orange, 0);
-    digitalWrite(yellow, 1);
-    delay(10);
-    i--;
+    if(! curPos > 0){
+      digitalWrite(black, 0);
+      digitalWrite(brown, 1);
+      digitalWrite(orange, 0);
+      digitalWrite(yellow, 1);
+      delay(1000);
+      i--;
+      currentStepperPosition = 2;
+    }
     if (i < 1) break;
 
     digitalWrite(black, 0);
     digitalWrite(brown, 1);
     digitalWrite(orange, 1);
     digitalWrite(yellow, 0);
-    delay(10);  
+    delay(1000);  
     i--;
+    currentStepperPosition = 3;
     if (i < 1) break;
     
   }
@@ -132,8 +160,8 @@ void stepMotor(int i){
   void refreshLCD(){
     lcd.clear();
     lcd.setCursor(0,0);
-    lcd.write(stepCycleArray[stepArrayIndex]);
+    lcd.write(" Selected: " + stepCycleArray[stepArrayIndex]);
     lcd.setCursor(0, 1);
-    lcd.write(stepCount);
+    lcd.write("Total: " + stepCount);
   }
 
