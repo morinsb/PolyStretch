@@ -58,12 +58,16 @@ void setup() {
   digitalWrite(yellow, LOW);
   
   pinMode(triggerButton, INPUT);
+  digitalWrite(triggerButton, HIGH);
   pinMode(resetButton, INPUT);
+  
   pinMode(upButton, INPUT);
+  digitalWrite(upButton, HIGH);
   pinMode(downButton, INPUT);
+  digitalWrite(downButton, HIGH);
 
   lcd.begin(16,2);
-  lcd.write("Hello, world!");
+  refreshLCD();
 }
 
 void loop() {
@@ -72,28 +76,31 @@ void loop() {
     if(stepArrayIndex < 0) {
       stepArrayIndex = 11;  
     }
-    refreshLCD();
+    stepCount++;
   }
   if(digitalRead(upButton) == HIGH){
     stepArrayIndex++;
     if(stepArrayIndex > 11){
       stepArrayIndex = 0;  
     }
-    refreshLCD();
+    stepCount++;
   }
+  /*
   if(digitalRead(resetButton) == HIGH){
     stepMotorForward(-stepCount, currentStepperPosition);  
     refreshLCD();
   }
-  else if(digitalRead(triggerButton) == HIGH){
+  if(digitalRead(triggerButton) == HIGH){
       stepMotorForward(stepCycleArray[stepArrayIndex], currentStepperPosition);
       refreshLCD();
   }
-  
+  */
+  refreshLCD();
+  delay(1000);
 }
 
 void stepMotorForward(int i, int curPos){
-   if(i > 0){
+   /*if(i > 0){
     stepCount += i;
    }
    digitalWrite(ENA, HIGH);
@@ -147,21 +154,28 @@ void stepMotorForward(int i, int curPos){
     currentStepperPosition = 3;
     if (i < 1) break;
     
-  }
-  
+   }
+ 
 
   // all outputs to stepper off
   digitalWrite(ENA, LOW);
   digitalWrite(ENB, LOW);
 
-
+*/
   }
 
   void refreshLCD(){
     lcd.clear();
     lcd.setCursor(0,0);
-    lcd.write(" Selected: " + stepCycleArray[stepArrayIndex]);
+    String str2 = "Selected: " + String(stepCycleArray[stepArrayIndex]);
+    lcd.print(str2);
+    
+    //lcd.write(str2);
+    
     lcd.setCursor(0, 1);
-    lcd.write("Total: " + stepCount);
+    String str = "Total: " + String(stepCount);
+    lcd.print(str);
+
+    //lcd.write(str);
   }
 
