@@ -1,18 +1,5 @@
 /*
- Stepper Motor Control - speed control
 
- This program drives a unipolar or bipolar stepper motor.
- The motor is attached to digital pins 8 - 11 of the Arduino.
- A potentiometer is connected to analog input 0.
-
- The motor will rotate in a clockwise direction. The higher the potentiometer value,
- the faster the motor speed. Because setSpeed() sets the delay between steps,
- you may notice the motor is less responsive to changes in the sensor value at
- low speeds.
-
- Created 30 Nov. 2009
- Modified 28 Oct 2010
- by Tom Igoe
 
  */
 
@@ -21,37 +8,35 @@
 
 // initialize the stepper library on pins 8 through 11:
 
-int stepCount = 0;  // number of steps the motor has taken
+float stepCount = 0;  // number of steps the motor has taken
 int stepArrayIndex = 4;
 int stepCycleArray[] = {-100, -10, -5, -1, 1, 5, 10, 50, 100, 500, 1000, 10000};
 int currentStepperPosition = 0;
+boolean calibrationMode = false;
 
 
-#define ENA 8
-#define ENB 9
+#define ENABLE 10
 
-#define black 10  // In1
-#define brown 11  // In2
-#define orange 12  // In3
-#define yellow 13  // In4
+#define black 9  // In1
+#define brown 8  // In2
+#define orange 1  // In3
+#define yellow 0  // In4
 
-#define triggerButton 4
-#define resetButton 5
-#define upButton 6
-#define downButton 7
+#define triggerButton 11
+#define resetButton 12
+#define upButton 13
 
-LiquidCrystal lcd(47, 48, 49, 50, 51, 52);
+LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
 
 void setup() {
-  pinMode(ENA, OUTPUT);
-  pinMode(ENB, OUTPUT);
+  
+  pinMode(ENABLE, OUTPUT);
   pinMode(black, OUTPUT);
   pinMode(brown, OUTPUT);
   pinMode(orange, OUTPUT);
   pinMode(yellow, OUTPUT);
 
-  digitalWrite(ENA, LOW);
-  digitalWrite(ENB, LOW);
+  digitalWrite(ENABLE, LOW);
   digitalWrite(black, LOW);
   digitalWrite(brown, LOW);
   digitalWrite(orange, LOW);
@@ -62,58 +47,128 @@ void setup() {
   pinMode(resetButton, INPUT);
   
   pinMode(upButton, INPUT);
-  digitalWrite(upButton, HIGH);
-  pinMode(downButton, INPUT);
-  digitalWrite(downButton, HIGH);
+  //digitalWrite(upButton, HIGH);
 
   lcd.begin(16,2);
   refreshLCD();
 }
 
 void loop() {
-  if(digitalRead(downButton) == HIGH){
+ /*if(digitalRead(downButton) == HIGH){
     stepArrayIndex--;
     if(stepArrayIndex < 0) {
       stepArrayIndex = 11;  
-    }
-    stepCount++;
-  }
-  if(digitalRead(upButton) == HIGH){
+    }    stepCount++;
+  }*/
+  if(digitalRead(upButton) == HIGH && digitalRead(resetButton) == HIGH){
+    calibrationMode = !calibrationMode;
+    refreshLCD();
+    delay(2000);
+  } 
+  else if(digitalRead(upButton) == HIGH){
     stepArrayIndex++;
     if(stepArrayIndex > 11){
       stepArrayIndex = 0;  
     }
-    stepCount++;
-  }
-  /*
-  if(digitalRead(resetButton) == HIGH){
-    stepMotorForward(-stepCount, currentStepperPosition);  
     refreshLCD();
+    delay(500);
   }
-  if(digitalRead(triggerButton) == HIGH){
+  
+  else if(digitalRead(resetButton) == HIGH){
+    delay(2000);
+    if( digitalRead(resetButton) == HIGH){
+      lcd.clear();
+      lcd.print("Resetting...");
+      stepMotorReverse(-stepCount, currentStepperPosition);  
+      refreshLCD();
+    }
+  }
+  else if(digitalRead(triggerButton) == HIGH){
+    lcd.clear();
+    lcd.print("Stepping...");
       stepMotorForward(stepCycleArray[stepArrayIndex], currentStepperPosition);
       refreshLCD();
   }
-  */
-  refreshLCD();
+}
+
+void stepMotorReverse(int i, int curPos){
+    i = -i;
+    digitalWrite(ENABLE, HIGH);
+    while (true)   {
+      if(curPos < 0 || curPos == 1){
+        digitalWrite(black, 0);
+        digitalWrite(brown, 1);
+        digitalWrite(orange, 1);
+        digitalWrite(yellow, 0);
+        delay(10);  
+        i--;
+        currentStepperPosition = 0;
+        curPos = -1;
+      }
+      if (i < 1) break;
+  
+      if(curPos < 0 || curPos ==  0){
+        digitalWrite(black, 0);
+        digitalWrite(brown, 1);
+        digitalWrite(orange, 0);
+        digitalWrite(yellow, 1);
+        delay(10);
+        i--;
+        currentStepperPosition = 3;
+        curPos = -1;
+      }
+      if (i < 1) break;
+  
+      if(curPos < 0 || curPos == 3){
+        digitalWrite(black, 1);
+        digitalWrite(brown, 0);
+        digitalWrite(orange, 0);
+        digitalWrite(yellow, 1);
+        delay(10);  
+        i--;
+        currentStepperPosition = 2;
+        curPos = -1;
+      }
+      if (i < 1) break;
+  
+      digitalWrite(black, 1);
+      digitalWrite(brown, 0);
+      digitalWrite(orange, 1);
+      digitalWrite(yellow, 0);
+      delay(10);
+      i--;
+      currentStepperPosition = 1;
+      curPos = -1;
+      if (i < 1) break;
+
+  }
+
+  digitalWrite(ENABLE, LOW);
   delay(1000);
 }
 
 void stepMotorForward(int i, int curPos){
-   /*if(i > 0){
+   if(i > 0 && !calibrationMode){
     stepCount += i;
    }
-   digitalWrite(ENA, HIGH);
-   digitalWrite(ENB, HIGH);
+   if(i < 0){
+    stepMotorReverse(i, curPos); 
+
+    if(!calibrationMode){
+      stepCount -= i;
+    }
+   } 
+   
+   digitalWrite(ENABLE, HIGH);
   while(true){
     if(! curPos > 0){
       digitalWrite(black, 1);
       digitalWrite(brown, 0);
       digitalWrite(orange, 1);
       digitalWrite(yellow, 0);
-      delay(1000);
+      delay(10);
       i--;
-      currentStepperPosition = 0;
+      currentStepperPosition = 1;
     } else{
       curPos--;  
     }
@@ -125,9 +180,9 @@ void stepMotorForward(int i, int curPos){
       digitalWrite(brown, 0);
       digitalWrite(orange, 0);
       digitalWrite(yellow, 1);
-      delay(1000);  
+      delay(10);  
       i--;
-      currentStepperPosition = 1;
+      currentStepperPosition = 2;
     } else {
       curPos--;  
     }
@@ -139,9 +194,9 @@ void stepMotorForward(int i, int curPos){
       digitalWrite(brown, 1);
       digitalWrite(orange, 0);
       digitalWrite(yellow, 1);
-      delay(1000);
+      delay(10);
       i--;
-      currentStepperPosition = 2;
+      currentStepperPosition = 3;
     }
     if (i < 1) break;
 
@@ -149,19 +204,19 @@ void stepMotorForward(int i, int curPos){
     digitalWrite(brown, 1);
     digitalWrite(orange, 1);
     digitalWrite(yellow, 0);
-    delay(1000);  
+    delay(10);  
     i--;
-    currentStepperPosition = 3;
+    currentStepperPosition = 0;
     if (i < 1) break;
     
    }
  
 
-  // all outputs to stepper off
-  digitalWrite(ENA, LOW);
-  digitalWrite(ENB, LOW);
+  // enable stepper off
+  digitalWrite(ENABLE, LOW);
 
-*/
+  //Keeps the button from triggerinng multiple times in a single press
+  delay(500);
   }
 
   void refreshLCD(){
@@ -173,8 +228,13 @@ void stepMotorForward(int i, int curPos){
     //lcd.write(str2);
     
     lcd.setCursor(0, 1);
-    String str = "Total: " + String(stepCount);
-    lcd.print(str);
+    if(calibrationMode){
+      lcd.print("Calib mode...");  
+    }
+    else{
+      String str = "Total: " + String(stepCount);
+      lcd.print(str);
+    }
 
     //lcd.write(str);
   }
