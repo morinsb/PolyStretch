@@ -79,7 +79,13 @@ void loop() {
     if( digitalRead(resetButton) == HIGH){
       lcd.clear();
       lcd.print("Resetting...");
-      stepMotorReverse(-stepCount, currentStepperPosition);  
+      if(stepCount > 0){
+        stepMotorReverse(-stepCount, currentStepperPosition); 
+      }
+      else{
+        stepMotorForward(-stepCount, currentStepperPosition);  
+      } 
+      stepCount = 0;
       refreshLCD();
     }
   }
@@ -155,7 +161,7 @@ void stepMotorForward(int i, int curPos){
     stepMotorReverse(i, curPos); 
 
     if(!calibrationMode){
-      stepCount -= i;
+      stepCount += i;
     }
    } 
    
