@@ -54,12 +54,6 @@ void setup() {
 }
 
 void loop() {
- /*if(digitalRead(downButton) == HIGH){
-    stepArrayIndex--;
-    if(stepArrayIndex < 0) {
-      stepArrayIndex = 11;  
-    }    stepCount++;
-  }*/
   if(digitalRead(upButton) == HIGH && digitalRead(resetButton) == HIGH){
     calibrationMode = !calibrationMode;
     refreshLCD();
@@ -224,6 +218,7 @@ void stepMotorForward(int i, int curPos){
   //Keeps the button from triggerinng multiple times in a single press
   delay(500);
   }
+
 
   void refreshLCD(){
     lcd.clear();
