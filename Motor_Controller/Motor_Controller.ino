@@ -1,13 +1,11 @@
-#include <LiquidCrystal.h>
 
-
-// initialize the stepper library on pins 8 through 11:
+// initialize the stepper on pins 8 through 11:
 
 float stepCount = 0;  // number of steps the motor has taken
 int stepArrayIndex = 4;
-int stepCycleArray[] = {-100, -10, -5, -1, 1, 5, 10, 50, 100, 500, 1000, 10000};
 int currentStepperPosition = 0;
 boolean calibrationMode = false;
+boolean torqueOn = false;
 
 
 #define ENABLE 10
@@ -16,12 +14,6 @@ boolean calibrationMode = false;
 #define brown 8  // In2
 #define orange 4  // In3
 #define yellow 3  // In4
-
-#define triggerButton 11
-#define resetButton 12
-#define upButton 13
-
-//LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
 
 void setup() {
   
@@ -36,13 +28,6 @@ void setup() {
   digitalWrite(brown, LOW);
   digitalWrite(orange, LOW);
   digitalWrite(yellow, LOW);
-  
-  pinMode(triggerButton, INPUT);
-  digitalWrite(triggerButton, HIGH);
-  pinMode(resetButton, INPUT);
-  
-  pinMode(upButton, INPUT);
-  //digitalWrite(upButton, HIGH);
 
   //lcd.begin(16,2);
   Serial.begin(9600);
@@ -54,20 +39,12 @@ void loop() {
   
   if(Serial.available()){
     String input = Serial.readString();
-    Serial.println(input);
     if(input.equalsIgnoreCase("Calibration")){
       calibrationMode = !calibrationMode;
       refreshLCD();
     } 
-    /*else if(input.contains(){
-      stepArrayIndex++;
-      if(stepArrayIndex > 11){
-        stepArrayIndex = 0;  
-      }
-      refreshLCD();
-      delay(500);
-    }*/
-    else if(input.equalsIgnoreCase("Help")){
+    
+   else if(input.equalsIgnoreCase("Help")){
       for(int i = 0; i < 5; i++){
         Serial.println();
         }
@@ -76,6 +53,7 @@ void loop() {
        Serial.println("To enter calibration mode, type 'Calibration'");
        Serial.println("To get a list of commands, type 'Help'");
        Serial.println("To step the motor, type in a positive or negative integer");
+       Serial.println("To turn the motor on, type 'Motor'");
        Serial.println("-------------------------------------------------------------------");
      }
     else if(input.equalsIgnoreCase("Reset")){
@@ -88,35 +66,60 @@ void loop() {
        Serial.println("Resetting...");
        Serial.println("-------------------------------------------------------------------");
         if(stepCount > 0){
-          stepMotorReverse(-stepCount, currentStepperPosition); 
+          stepMotorForward(stepCount, currentStepperPosition); 
         }
         else{
-          stepMotorForward(-stepCount, currentStepperPosition);  
+          stepMotorForward(stepCount, currentStepperPosition);  
         } 
         stepCount = 0;
         refreshLCD();
       
     }
+
+    else if(input.equalsIgnoreCase("Motor")){
+        for(int i = 0; i < 5; i++){
+        Serial.println();
+        }
+       if(torqueOn){
+          digitalWrite(ENABLE, LOW);
+         Serial.println("-------------------------------------------------------------------");
+         Serial.println("Motor is now off");
+         Serial.println("-------------------------------------------------------------------");
+         torqueOn = !torqueOn;
+       }
+       else{
+          digitalWrite(ENABLE, HIGH);
+          Serial.println("-------------------------------------------------------------------");
+         Serial.println("Motor is now on");
+         Serial.println("-------------------------------------------------------------------");
+         torqueOn = !torqueOn;
+        }
+    }
     
     else if(input.toInt() != 0){
-      int inputInt = input.toInt();
-      Serial.println(inputInt);
-     for(int i = 0; i <5; i++){
-        Serial.println();
+      for(int i = 0; i <5; i++){
+          Serial.println();
       }
-       Serial.println("-------------------------------------------------------------------");
-       Serial.println("Stepping...");
-       Serial.println("-------------------------------------------------------------------");
-       stepMotorForward(inputInt, currentStepperPosition);
-       refreshLCD();
-    }
+      Serial.println("-------------------------------------------------------------------");
+      if(torqueOn){
+        int inputInt = input.toInt();
+         Serial.println("Stepping...");
+         Serial.println("-------------------------------------------------------------------");
+         stepMotorForward(-inputInt, currentStepperPosition);
+         refreshLCD();
+      }
+      else{
+        Serial.println("Please turn on the motor");
+        Serial.println("-------------------------------------------------------------------");
+      }
+     }
   }
 }
 
 void stepMotorReverse(int i, int curPos){
   
     i = -i;
-    digitalWrite(ENABLE, HIGH);
+    //digitalWrite(ENABLE, HIGH);
     while (true)   {
       if(curPos < 0 || curPos == 1){
         digitalWrite(black, 0);
@@ -166,23 +169,23 @@ void stepMotorReverse(int i, int curPos){
 
   }
 
-  digitalWrite(ENABLE, LOW);
+  //digitalWrite(ENABLE, LOW);
   delay(1000);
 }
 
 void stepMotorForward(int i, int curPos){
    if(i > 0 && !calibrationMode){
-    stepCount += i;
+    stepCount -= i;
    }
    if(i < 0){
     stepMotorReverse(i, curPos); 
 
     if(!calibrationMode){
-      stepCount += i;
+      stepCount -= i;
     }
    } 
    
-   digitalWrite(ENABLE, HIGH);
+   //digitalWrite(ENABLE, HIGH);
   while(true){
     if(! curPos > 0){
       digitalWrite(black, 1);
@@ -236,7 +239,7 @@ void stepMotorForward(int i, int curPos){
  
 
   // enable stepper off
-  digitalWrite(ENABLE, LOW);
+  //digitalWrite(ENABLE, LOW);
 
   //Keeps the button from triggerinng multiple times in a single press
   delay(500);
@@ -250,13 +253,6 @@ void stepMotorForward(int i, int curPos){
         Serial.println();
        }
        Serial.println("-------------------------------------------------------------------");
-      //lcd.setCursor(0,0);
-      //String str2 = "Selected: " + String(stepCycleArray[stepArrayIndex]);
-      //Serial.println(str2);
-      
-      //lcd.write(str2);
-      
-      //lcd.setCursor(0, 1);
       if(calibrationMode){
         Serial.println("Calibration mode...");  
       }
@@ -266,8 +262,6 @@ void stepMotorForward(int i, int curPos){
       }
   
       Serial.println("-------------------------------------------------------------------");
-  
-      //lcd.write(str);
     
   }
 
