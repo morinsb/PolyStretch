@@ -1,8 +1,3 @@
-/*
-
-
- */
-
 #include <LiquidCrystal.h>
 
 
@@ -19,14 +14,14 @@ boolean calibrationMode = false;
 
 #define black 9  // In1
 #define brown 8  // In2
-#define orange 1  // In3
-#define yellow 0  // In4
+#define orange 4  // In3
+#define yellow 3  // In4
 
 #define triggerButton 11
 #define resetButton 12
 #define upButton 13
 
-LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
+//LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
 
 void setup() {
   
@@ -49,49 +44,77 @@ void setup() {
   pinMode(upButton, INPUT);
   //digitalWrite(upButton, HIGH);
 
-  lcd.begin(16,2);
+  //lcd.begin(16,2);
+  Serial.begin(9600);
   refreshLCD();
+  Serial.println("Type 'Help' to get a list of commands at any time");
 }
 
 void loop() {
-  if(digitalRead(upButton) == HIGH && digitalRead(resetButton) == HIGH){
-    calibrationMode = !calibrationMode;
-    refreshLCD();
-    delay(2000);
-  } 
-  else if(digitalRead(upButton) == HIGH){
-    stepArrayIndex++;
-    if(stepArrayIndex > 11){
-      stepArrayIndex = 0;  
-    }
-    refreshLCD();
-    delay(500);
-  }
   
-  else if(digitalRead(resetButton) == HIGH){
-    delay(2000);
-    if( digitalRead(resetButton) == HIGH){
-      lcd.clear();
-      lcd.print("Resetting...");
-      if(stepCount > 0){
-        stepMotorReverse(-stepCount, currentStepperPosition); 
+  if(Serial.available()){
+    String input = Serial.readString();
+    Serial.println(input);
+    if(input.equalsIgnoreCase("Calibration")){
+      calibrationMode = !calibrationMode;
+      refreshLCD();
+    } 
+    /*else if(input.contains(){
+      stepArrayIndex++;
+      if(stepArrayIndex > 11){
+        stepArrayIndex = 0;  
       }
-      else{
-        stepMotorForward(-stepCount, currentStepperPosition);  
-      } 
-      stepCount = 0;
       refreshLCD();
+      delay(500);
+    }*/
+    else if(input.equalsIgnoreCase("Help")){
+      for(int i = 0; i < 5; i++){
+        Serial.println();
+        }
+       Serial.println("-------------------------------------------------------------------");
+       Serial.println("To reset, type 'Reset'");
+       Serial.println("To enter calibration mode, type 'Calibration'");
+       Serial.println("To get a list of commands, type 'Help'");
+       Serial.println("To step the motor, type in a positive or negative integer");
+       Serial.println("-------------------------------------------------------------------");
+     }
+    else if(input.equalsIgnoreCase("Reset")){
+      
+        //lcd.clear();
+        for(int i = 0; i < 5; i++){
+        Serial.println();
+        }
+       Serial.println("-------------------------------------------------------------------");
+       Serial.println("Resetting...");
+       Serial.println("-------------------------------------------------------------------");
+        if(stepCount > 0){
+          stepMotorReverse(-stepCount, currentStepperPosition); 
+        }
+        else{
+          stepMotorForward(-stepCount, currentStepperPosition);  
+        } 
+        stepCount = 0;
+        refreshLCD();
+      
     }
-  }
-  else if(digitalRead(triggerButton) == HIGH){
-    lcd.clear();
-    lcd.print("Stepping...");
-      stepMotorForward(stepCycleArray[stepArrayIndex], currentStepperPosition);
-      refreshLCD();
+    
+    else if(input.toInt() != 0){
+      int inputInt = input.toInt();
+      Serial.println(inputInt);
+     for(int i = 0; i <5; i++){
+        Serial.println();
+      }
+       Serial.println("-------------------------------------------------------------------");
+       Serial.println("Stepping...");
+       Serial.println("-------------------------------------------------------------------");
+       stepMotorForward(inputInt, currentStepperPosition);
+       refreshLCD();
+    }
   }
 }
 
 void stepMotorReverse(int i, int curPos){
+  
     i = -i;
     digitalWrite(ENABLE, HIGH);
     while (true)   {
@@ -217,26 +240,34 @@ void stepMotorForward(int i, int curPos){
 
   //Keeps the button from triggerinng multiple times in a single press
   delay(500);
-  }
-
-
-  void refreshLCD(){
-    lcd.clear();
-    lcd.setCursor(0,0);
-    String str2 = "Selected: " + String(stepCycleArray[stepArrayIndex]);
-    lcd.print(str2);
-    
-    //lcd.write(str2);
-    
-    lcd.setCursor(0, 1);
-    if(calibrationMode){
-      lcd.print("Calib mode...");  
+   
     }
-    else{
-      String str = "Total: " + String(stepCount);
-      lcd.print(str);
-    }
-
-    //lcd.write(str);
+  
+  
+    void refreshLCD(){
+      //lcd.clear();
+      for(int i = 0; i <5; i++){
+        Serial.println();
+       }
+       Serial.println("-------------------------------------------------------------------");
+      //lcd.setCursor(0,0);
+      //String str2 = "Selected: " + String(stepCycleArray[stepArrayIndex]);
+      //Serial.println(str2);
+      
+      //lcd.write(str2);
+      
+      //lcd.setCursor(0, 1);
+      if(calibrationMode){
+        Serial.println("Calibration mode...");  
+      }
+      else{
+        String str = "Total Steps: " + String(stepCount);
+        Serial.println(str);
+      }
+  
+      Serial.println("-------------------------------------------------------------------");
+  
+      //lcd.write(str);
+    
   }
 
