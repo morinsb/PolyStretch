@@ -53,7 +53,8 @@ void loop() {
        Serial.println("To enter calibration mode, type 'Calibration'");
        Serial.println("To get a list of commands, type 'Help'");
        Serial.println("To step the motor, type in a positive or negative integer");
-       Serial.println("To turn the motor on, type 'Motor'");
+       Serial.println("To toggle power to the motor, type 'Motor'");
+       Serial.println("Please note that having the motor on activates holding torque and consumes a lot of power. When you are not stretching a sample, shut the motor down");
        Serial.println("-------------------------------------------------------------------");
      }
     else if(input.equalsIgnoreCase("Reset")){
